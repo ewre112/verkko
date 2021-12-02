@@ -29,10 +29,15 @@
         "n": 2,
         "mem": 64
     },
-    "create_layout": {
+    "create_partial_mbg_layout": {
         "time": "24:00:00",
         "n": 1,
         "mem": 32
+    },
+    "create_partial_aligned_layout": {
+        "time": "24:00:00",
+        "n": 32,
+        "mem": 64
     },
     "cns": {
        "time" : "24:00:00",
