@@ -142,7 +142,7 @@ rule create_partial_aligned_layout:
     threads: 32
     shell:
         '''
-        grep -P '^S' < graph.gfa | awk '{print ">" $2; print $3;}' > contigs_rle.fa
+        grep -P '^S' < graph.gfa | awk '{{print ">" $2; print $3;}}' > contigs_rle.fa
         /usr/bin/time -v winnowmap -x map-pb -t 32 contigs_rle.fa {input.reads} > alns.paf 2> stderr_winnowmap_hifi.txt
         /usr/bin/time -v {SCRIPT_PATH}/get_layout_from_aln.py contigs_rle.fa alns.paf > {output.layout} 2> stderr_layout_align.txt
         {SCRIPT_PATH}/check_layout_gaps.py < {output.layout} > {output.gaps}
