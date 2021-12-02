@@ -153,7 +153,7 @@ rule merge_partial_layouts:
         mbg_layout = "layout_mbg.txt",
         align_layout = "layout_aligned.txt"
     output:
-        layout = "layout.txt"
+        layout = "layout.txt",
         gaps = "gaps.txt"
     threads: 1
     shell:
