@@ -369,16 +369,9 @@ for contig in contig_actual_lines:
 	if len(contig_actual_lines[contig]) == 0: continue
 	assert len(contig_actual_lines[contig]) > 0
 	contig_actual_lines[contig].sort(key=lambda x: min(x[1], x[2]))
-	start_pos = contig_actual_lines[contig][0][1]
-	end_pos = contig_actual_lines[contig][0][1]
-	for line in contig_actual_lines[contig]:
-		start_pos = min(start_pos, line[1])
-		start_pos = min(start_pos, line[2])
-		end_pos = max(end_pos, line[1])
-		end_pos = max(end_pos, line[2])
 	print("tig\t" + contig)
-	print("len\t" + str(end_pos - start_pos))
+	print("len\t" + str(contig_lens[contig]))
 	print("rds\t" + str(len(contig_actual_lines[contig])))
 	for line in contig_actual_lines[contig]:
-		print(line[0] + "\t" + str(line[1] - start_pos) + "\t" + str(line[2] - start_pos))
+		print(line[0] + "\t" + str(line[1]) + "\t" + str(line[2]))
 	print("end")

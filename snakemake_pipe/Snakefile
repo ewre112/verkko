@@ -96,13 +96,13 @@ rule postprocess:
         {ROOT_PATH}/postprocess.sh {input} {output} &> {log}
         '''
 
-rule create_layout:
+rule create_partial_mbg_layout:
     input: graph='unitig-popped-unitig-normal-connected-tip.gfa',
            paths='paths.gaf'
     output:
         #combined_edges=temp('combined-edges.gfa'),
-        layout='layout.txt',
-        gaps='gaps.txt'
+        layout='layout_mbg.txt',
+        gaps='gaps_mbg.txt'
     threads: 1
     shell:
         '''
@@ -113,6 +113,52 @@ rule create_layout:
         grep -P '^S' *.gfa | grep -v '\\*' | awk '{{print $2 "\\t" length($3);}}' > nodelens.txt
         grep -P '^S' {input.graph} | awk '{{print $2 "\\t" ">" $2;}}' > consensus_paths.txt
         {SCRIPT_PATH}/get_layout_from_mbg.py combined-nodemap.txt combined-edges.gfa combined-alignments.gaf consensus_paths.txt nodelens.txt > {output.layout} 2> unitig_to_mbg_list.txt
+        {SCRIPT_PATH}/check_layout_gaps.py < {output.layout} > {output.gaps}
+        '''
+
+rule get_nonplaced_hifi_reads:
+    input:
+        reads=HIFI_READS,
+        mbg_layout="layout_mbg.txt"
+    output:
+        reads = "unplaced_hifi.fa",
+        unplaced_names = temp("unplaced_hifi_names.txt"),
+        placed_names = temp("placed_hifi_names.txt")
+    threads: 1
+    shell:
+        '''
+        for o in {input.reads}; do seqtk seq $o >> {output.unplaced_names}; done
+        awk '$1!="tig"&&$1!="len"&&$1!="rds"&&$1!="end"{print $1;}' < {input.mbg_layout} | sort | uniq > {output.placed_names}
+        cat {output.unplaced_names} {output.placed_names} | sort | uniq -c | grep -P '^\\s+1\b' | sed 's/^\\s+1\\s//g' > read_names.txt
+        for o in {input.reads}; do seqtk subseq $o read_names >> {output.reads}; done
+        '''
+
+rule create_partial_aligned_layout:
+    input: graph='unitig-popped-unitig-normal-connected-tip.gfa',
+           reads='unplaced_hifi.fa'
+    output:
+        layout='layout_aligned.txt',
+        gaps='gaps_aligned.txt'
+    threads: 32
+    shell:
+        '''
+        grep -P '^S' < graph.gfa | awk '{print ">" $2; print $3;}' > contigs_rle.fa
+        /usr/bin/time -v winnowmap -x map-pb -t 32 contigs_rle.fa {input.reads} > alns.paf 2> stderr_winnowmap_hifi.txt
+        /usr/bin/time -v {SCRIPT_PATH}/get_layout_from_aln.py contigs_rle.fa alns.paf > {output.layout} 2> stderr_layout_align.txt
+        {SCRIPT_PATH}/check_layout_gaps.py < {output.layout} > {output.gaps}
+        '''
+
+rule merge_partial_layouts:
+    input:
+        mbg_layout = "layout_mbg.txt",
+        align_layout = "layout_aligned.txt"
+    output:
+        layout = "layout.txt"
+        gaps = "gaps.txt"
+    threads: 1
+    shell:
+        '''
+        {SCRIPT_PATH}/merge_partial_layouts.py {input.mbg_layout} {input.align_layout} > {output.layout}
         {SCRIPT_PATH}/check_layout_gaps.py < {output.layout} > {output.gaps}
         '''
 
