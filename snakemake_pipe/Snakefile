@@ -128,7 +128,7 @@ rule get_nonplaced_hifi_reads:
         rm -f all_read_names.txt
         for o in {input.reads}; do seqtk seq -A $o | grep ">" | tr -d ">" >> all_read_names.txt; done
         cut -f 1 < {input.mbg_layout} | grep -vP '^tig$' | grep -vP '^len$' | grep -vP '^rds$' | grep -vP '^end$' | sort | uniq > placed_read_names.txt
-        cat all_read_names.txt placed_read_names.txt | sort | uniq -c | grep -P '^\\s+1\b' | sed 's/^\\s+1\\s//g' > unplaced_read_names.txt
+        cat all_read_names.txt placed_read_names.txt | sort | uniq -c | grep -P '^\\s+1\\b' | sed 's/^\\s+1\\s//g' > unplaced_read_names.txt
         for o in {input.reads}; do seqtk subseq $o unplaced_read_names.txt >> {output.reads}; done
         '''
 
