@@ -121,16 +121,15 @@ rule get_nonplaced_hifi_reads:
         reads=HIFI_READS,
         mbg_layout="layout_mbg.txt"
     output:
-        reads = "unplaced_hifi.fa",
-        unplaced_names = temp("unplaced_hifi_names.txt"),
-        placed_names = temp("placed_hifi_names.txt")
+        reads = "unplaced_hifi.fa"
     threads: 1
     shell:
         '''
-        for o in {input.reads}; do seqtk seq -A $o | grep ">" | tr -d ">" >> {output.unplaced_names}; done
-        awk '$1!="tig"&&$1!="len"&&$1!="rds"&&$1!="end"{{print $1;}}' < {input.mbg_layout} | sort | uniq > {output.placed_names}
-        cat {output.unplaced_names} {output.placed_names} | sort | uniq -c | grep -P '^\\s+1\b' | sed 's/^\\s+1\\s//g' > read_names.txt
-        for o in {input.reads}; do seqtk subseq $o read_names >> {output.reads}; done
+        rm -f all_read_names.txt
+        for o in {input.reads}; do seqtk seq -A $o | grep ">" | tr -d ">" >> all_read_names.txt; done
+        cut -f 1 < {input.mbg_layout} | grep -vP '^tig$' | grep -vP '^len$' | grep -vP '^rds$' | grep -vP '^end$' | sort | uniq > placed_read_names.txt
+        cat all_read_names.txt placed_read_names.txt | sort | uniq -c | grep -P '^\\s+1\b' | sed 's/^\\s+1\\s//g' > unplaced_read_names.txt
+        for o in {input.reads}; do seqtk subseq $o unplaced_read_names.txt >> {output.reads}; done
         '''
 
 rule create_partial_aligned_layout:
