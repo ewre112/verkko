@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import sys
 import random
@@ -17,9 +17,9 @@ def add_lines(read_name, current_lines, lines_per_contig):
 		# we skip alignments if the full read doesn't align
 		# however, in the case of edge effects, we can have reads that extend past the consensus we aligned to and that's OK so allow if the alignment break is within a few bp of contig start/end
 		if float(int(parts[3]) - int(parts[2])) / float(int(parts[1])) < 0.95:
-		# read is not close to the end so skip it
-		if (int(parts[7]) > MAX_END_CLIP and int(parts[8]) + MAX_END_CLIP < int(parts[6])):
-			sys.stderr.write("Skipping alignment '%s' because it doesn't cover enough of the read\n"%(l)); continue
+			# read is not close to the end so skip it
+			if (int(parts[7]) > MAX_END_CLIP and int(parts[8]) + MAX_END_CLIP < int(parts[6])):
+				sys.stderr.write("Skipping alignment '%s' because it doesn't cover enough of the read\n"%(l)); continue
 		if int(parts[11]) < max_mapq: continue
 		if int(parts[11]) > max_mapq:
 			max_mapq_lines = []
