@@ -26,6 +26,7 @@ for filename in sys.argv[1:]:
 				continue
 			else:
 				assert current_contig != ""
+				if current_contig not in contig_lines: contig_lines[current_contig] = []
 				contig_lines[current_contig].append((parts[0], int(parts[1]), int(parts[2])))
 
 for contig in contig_lines:
