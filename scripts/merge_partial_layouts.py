@@ -38,15 +38,15 @@ for contig in contig_lines:
 		contig_start = min(contig_start, line[2])
 		contig_end = max(contig_end, line[1])
 		contig_end = max(contig_end, line[2])
-	contig_end -= contig_start
+	contig_length = contig_end - contig_start
 	print("tig\t" + contig)
-	print("len\t" + str(contig_end - contig_start))
+	print("len\t" + str(contig_length))
 	print("rds\t" + str(len(contig_lines[contig])))
 	contig_lines[contig].sort(key=lambda x: min(x[1], x[2]))
 	for line in contig_lines[contig]:
 		assert line[1] >= contig_start
 		assert line[2] >= contig_start
-		assert line[1] - contig_start <= contig_end
-		assert line[2] - contig_start <= contig_end
+		assert line[1] <= contig_end
+		assert line[2] <= contig_end
 		print(line[0] + "\t" + str(line[1] - contig_start) + "\t" + str(line[2] - contig_start))
 	print("end")
