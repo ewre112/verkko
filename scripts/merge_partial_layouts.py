@@ -38,6 +38,7 @@ for contig in contig_lines:
 		contig_start = min(contig_start, line[2])
 		contig_end = max(contig_end, line[1])
 		contig_end = max(contig_end, line[2])
+	contig_end -= contig_start
 	print("tig\t" + contig)
 	print("len\t" + str(contig_end - contig_start))
 	print("rds\t" + str(len(contig_lines[contig])))
