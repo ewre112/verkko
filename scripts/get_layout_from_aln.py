@@ -69,12 +69,12 @@ with open(paf_file) as f:
 	for l in f:
 		parts = l.strip().split('\t')
 		if parts[0] != current_name:
-			add_lines(current_name, current_lines, lines_per_contig, read_order)
+			add_lines(current_name, current_lines, lines_per_contig)
 			current_lines = []
 			current_name = parts[0]
 		current_lines.append(l.strip())
 
-add_lines(current_name, current_lines, lines_per_contig, read_order)
+add_lines(current_name, current_lines, lines_per_contig)
 current_lines = []
 current_name = parts[0]
 
