@@ -84,6 +84,6 @@ for contig in lines_per_contig:
 	print("tig\t" + contig)
 	print("len\t" + str(contig_len[contig]))
 	print("rds\t" + str(len(lines_per_contig[contig])))
-	for line in lines_per_contig:
-		print(line[1] + "\t" + str(line[2]) + "\t" + str(line[3]))
+	for line in lines_per_contig[contig]:
+		print(line[3] + "\t" + str(line[1]) + "\t" + str(line[2]))
 	print("end")
