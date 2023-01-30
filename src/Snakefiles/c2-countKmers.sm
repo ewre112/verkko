@@ -259,6 +259,7 @@ set -e
 #
 {VERKKO}/bin/meryl threads={threads} \\\\
   union-sum {params.paths} \\\\
+  greater-than 4 \\\\
   output all.meryl
 
 #  Note!  Meryl has a bug with 'print' outputs.  Printing to stdout
