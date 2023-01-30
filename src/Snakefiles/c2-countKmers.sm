@@ -243,9 +243,9 @@ rule countKmers:
         8
     resources:
         job_id = 1,
-        n_cpus = 8,
-        mem_gb = 16,
-        time_h = 2
+        n_cpus = int(config['mer_n_cpus']),
+        mem_gb = lambda wildcards, input, attempt: getMemoryRequest(attempt, 'mer'),
+        time_h = lambda wildcards, input, attempt: getTimeRequest(attempt, 'mer')
     shell:
         '''
 cd 0-correction

@@ -163,7 +163,7 @@ sto_mem_gb=4
 sto_time_h=4
 
 mer_n_cpus=4
-mer_mem_gb=16
+mer_mem_gb=32
 mer_time_h=4
 
 ovb_n_cpus=8
