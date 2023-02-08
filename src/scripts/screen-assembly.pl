@@ -13,6 +13,7 @@ my $minLength  = 100000;
 my %contaminantSeq;
 
 my $threads    = 4;
+my $mashmap    = "mashmap";
 
 my $output;
 
@@ -35,16 +36,27 @@ while (scalar(@ARGV) > 0) {
         $minLength = int(shift @ARGV);
     }
     elsif ($opt eq "--contaminant") {
-        my $prefix   = shift @ARGV;
-        my $sequence = shift @ARGV;
+        my $prefix   = $ARGV[0];
+        my $sequence = $ARGV[1];
 
-        $contaminantSeq{$prefix} = $sequence;
+        while (($prefix !~ m/^--/) && (-e $sequence)) {
+            $contaminantSeq{$prefix} = $sequence;
+
+            shift @ARGV;
+            shift @ARGV;
+
+            $prefix   = $ARGV[0];
+            $sequence = $ARGV[1];
+        }
     }
     elsif ($opt eq "--threads") {
         $threads = int(shift @ARGV);
     }
     elsif ($opt eq "--output") {
         $output = shift @ARGV;
+    }
+    elsif ($opt eq "--mashmap") {
+        $mashmap = shift @ARGV;
     }
     else {
         die "Unknown option '$opt'.\n";
@@ -53,9 +65,37 @@ while (scalar(@ARGV) > 0) {
 
 if (($assembly eq "") ||
     ($graph    eq "") ||
-    (scalar(keys %contaminantSeq) eq 0)) {
-    die "usage: $0 ...\n";
+    ($output   eq "")) {
+    print "usage: $0 --assembly X.fasta --graph X.gfa ...\n";
+    print "  --assembly X.fasta           sequences to screen for crud\n";
+    print "  --graph X.gfa                graph to decide if a short contig is disconnected\n";
+    print "  --graphmap X.scfmap          layoutContigs scfmap to rename graph nodes to contig names\n";
+    print "  --hifi-coverage X.csv        contig read coverage\n";
+    print "  --minlength L                contigs shorter than L bp are deemed 'short' (default: 100000)\n";
+    print "  --contaminant N F [N F ...]  label N and contaminant fasta F to screen; example:\n";
+    print "                                  --contaminant ebv  ebv.fasta.gz \\\n";
+    print "                                                mito mito.fasta   \\\n";
+    print "                                                rdna r.fasta.gz\n";
+    print "  --threads T                  number of mashmap compute threads to use\n";
+    print "  --output X                   write outputs to prefix X\n";
+    print "                                  X.disconnected.fasta\n";
+    print "                                  X.ebv.exemplar.fasta\n";
+    print "                                  X.ebv.fasta\n";
+    print "                                  X.ebv.mashmap.err\n";
+    print "                                  X.ebv.mashmap.out\n";
+    print "                                  X.fasta\n";
+    print "                                  X.mito.exemplar.fasta\n";
+    print "                                  X.mito.fasta\n";
+    print "                                  X.mito.mashmap.err\n";
+    print "                                  X.mito.mashmap.out\n";
+    print "                                  X.rdna.exemplar.fasta\n";
+    print "                                  X.rdna.fasta\n";
+    print "                                  X.rdna.mashmap.err\n";
+    print "                                  X.rdna.mashmap.out\n";
+    exit(1);
 }
+
+
 
 
 
@@ -212,7 +252,7 @@ sub findDisconnected ($$) {
     printf STDERR " Found %5d long  disconnected nodes.\n", scalar(@discLong);
     printf STDERR "\n";
 
-    return @discShort;
+    return(@discShort);
 }
 
 
@@ -231,7 +271,7 @@ sub mashMap ($$$$) {
     else {
         print STDERR "Running mashmap against '$cp' ('$cs').\n";
 
-        $map  = "mashmap";
+        $map  = "$mashmap";
         $map .= " --ref '$a'";
         $map .= " --query '$cs'";
         $map .= " --perc_identity 95";
@@ -271,9 +311,6 @@ sub mashMap ($$$$) {
 #
 #  awk '{{if (\$NF > 99 && ((\$9-\$8)/\$7 > 0.50 || (\$9-\$8)/\$7 > 0.25 && \$7 < 50000)) print \$6}}' | sort | uniq > contaminant.list
 #
-sub filterMashGoodHit ($$$) {
-}
-
 sub filterMash ($) {
     my  $cp = shift @_;
 
@@ -366,27 +403,40 @@ sub filterMash ($) {
 
 
 #  Extract '@filter' sequences from $a.
-#    If $savehits == 1, save the sequences     in '@filter' to the output.
-#    If $savehits == 0, save the sequences NOT in '@filter' to the output.
 #
-sub filterSequences ($$$$$@) {
+#  If $cp is defined, the sequences in @filter are copied to the output file.
+#  If it is undef, the sequences NOT in @filter are copied to the output file.
+#
+#  If $exemplar is defined, that specific sequence is saved.
+#
+sub filterSequences ($$$$@) {
     my $a           = shift @_;
-    my $savehits    = shift @_;
-    my $cp          = shift @_;
     my $output      = shift @_;
+    my $cp          = shift @_;
     my $exemplar    = shift @_;
     my @filter      =       @_;
     my %filter;
 
+    #  Make lookups of sequences we want to filter easier.
+    open(O, "> $output.ids") or die "Failed to open '$output.ids' for output: $!\n";
     foreach my $f (@filter) {
+        print O "$f\n";
         $filter{$f}++;
     }
+    close(O);
 
-    print STDERR "Filtering '$cp' from '$a'.\n";
+    #  Open some output files.
+    if (defined($cp)) {
+        print STDERR "Filtering '$cp' from '$a'.\n";
+        open(O, "> $output.fasta")          or die "Failed to open '$output.fasta' for output: $!\n";
+        open(E, "> $output.exemplar.fasta") or die "Failed to open '$output.exemplar.fasta' for output: $!\n";
+    }
+    else {
+        print STDERR "Extracting sequences from '$a'.\n";
+        open(O, "> $output.fasta")          or die "Failed to open '$output.fasta' for output: $!\n";
+    }
 
-    open(O, "> $output.$cp.fasta")          or die "Failed to open '$output.$cp.fasta' for output: $!\n";
-    open(E, "> $output.$cp.exemplar.fasta") or die "Failed to open '$output.$cp.exemplar.fasta' for output: $!\n";
-
+    #  Scan the input, copying desired sequences to the output.
     open(F, "< $a") or die "Failed to open '$a' for reading: $!\n";
     while (!eof(F)) {
         my $h = <F>;
@@ -397,12 +447,14 @@ sub filterSequences ($$$$$@) {
 
         if ($h =~ m/^>(\S+)\s*/) {
             my $n = $1;
-            my $e = exists($filter{$n});
 
-            print O "$h\n$s\n"  if ( $savehits &&  $e);
-            print O "$h\n$s\n"  if (!$savehits && !$e);
-
-            print E "$h\n$s\n"  if ($n eq $exemplar);
+            if (defined($cp)) {
+                print O "$h\n$s\n"  if (exists($filter{$n}));
+                print E "$h\n$s\n"  if ($n eq $exemplar);
+            }
+            else {
+                print O "$h\n$s\n"  if (!exists($filter{$n}));
+            }
         }
         else {
             die "Failed to find ident line in input line '", substr($h, 0, 40), "'.\n";
@@ -410,10 +462,10 @@ sub filterSequences ($$$$$@) {
     }
     close(F);
 
-    close(E);
+    close(E)   if (defined($cp));
     close(O);
 
-    unlink "$output.$cp.exemplar.fasta" if (!defined($exemplar));
+    unlink "$output.exemplar.fasta" if (!defined($exemplar));
 
     print STDERR "\n";
 }
@@ -431,7 +483,7 @@ loadSequenceLengths($assembly);
 loadGtoC($graphmap);
 
 my @disconnected  = findDisconnected($graph, $minLength);
-filterSequences($assembly, 1, "disconnected", $output, undef, @disconnected);
+filterSequences($assembly, "$output.disconnected", "disconnected", undef, @disconnected);
 
 my @crud = @disconnected;
 
@@ -442,10 +494,12 @@ foreach my $cp (keys %contaminantSeq) {
 
     my ($exemplar, @contaminants) = filterMash($cp);
 
-    filterSequences($assembly, 1, $cp, $output, $exemplar, @contaminants);
+    filterSequences($assembly, "$output.$cp", $cp, $exemplar, @contaminants);
 
     push @crud, @contaminants;
 }
 
 
-filterSequences($assembly, 0, "filtered", $output, undef, @crud);
+filterSequences($assembly, $output, undef, undef, @crud);
+
+exit(0);
