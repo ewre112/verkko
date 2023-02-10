@@ -237,7 +237,7 @@ sub findDisconnected ($$) {
     close(G);
 
     foreach my $c (keys %nodes) {
-        next   if (! exists($edges{$c}));
+        next   if (exists($edges{$c}));
 
         if ($contigLength{$c} <  $minl) {
             push @discShort, $c;
