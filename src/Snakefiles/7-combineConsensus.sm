@@ -103,7 +103,7 @@ echo ""
 cp -p assembly.fasta ../{output.cns}
 
 #  Jump through hoops to not fail when there are no contaminant outputs.
-for xx in screened.*.fasta ; do
+for xx in assembly.*.fasta ; do
   if [ -e \$xx ] ; then
     cp -p \$xx ../\$xx
   fi
