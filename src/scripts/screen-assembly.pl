@@ -381,7 +381,7 @@ sub filterMash ($) {
  
             #print STDERR "bestDepth='$bestDepth'  r='$r'  hc='$hifiCoverage{$r}'\n";
 
-            if (($g3) && ($bestDepth < $hifiCoverage{$r})) {
+            if (($g3) && ($bestDepth <= $hifiCoverage{$r})) {
                 $bestIdent = $r;
                 $bestDepth = $hifiCoverage{$r};
             }
