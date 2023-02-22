@@ -529,10 +529,10 @@ if [ ! -z "$screen" ] ; then
 
     while [ ! -z "$sctest" ]
     do 
-        sident=$( echo $sctest | cut -sw -f 1  )
-        sfpath=$( echo $sctest | cut -sw -f 2  )
+        sident=$( echo $sctest | cut -s -d ' ' -f 1  )
+        sfpath=$( echo $sctest | cut -s -d ' ' -f 2  )
         dtpath="$verkko/data/$sfpath"
-        sctest=$( echo $sctest | cut -sw -f 3- )
+        sctest=$( echo $sctest | cut -s -d ' ' -f 3- )
 
         if   [ -e "$sfpath" ] ; then
             screen="$screen $sident $sfpath"
