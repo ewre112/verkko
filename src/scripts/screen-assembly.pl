@@ -375,7 +375,7 @@ sub filterMash ($$) {
         my $concov = int(0.5 + 100.0 * ($conend - $conbgn) / $conlen);
         my $ctgcov = int(0.5 + 100.0 * ($ctgend - $ctgbgn) / $ctglen);
 
-        my $gi   = ($ident  >= 98.0);   #  Good identity.
+        my $gi   = (int($ident+0.5)  >= 98.0);   #  Good identity.
         my $g1   = ($ctgcov >= 10);     #  Covers a goodly chunk of the contig.
         my $g2   = ($concov >= 25);     #  Covers a goodly chunk of the contaminant.
 
@@ -397,12 +397,14 @@ sub filterMash ($$) {
     my %hits;
     my $exemplar       = "";
     my $exemplarDepth  = 0;
+    my $exemplarBreadth = 0;
 
     foreach my $ctg (keys %rawhits) {
         my @rh = sort { $a <=> $b } @{$rawhits{$ctg}};   #  Sort by contig begin position.
 
         my $covlen = 0;   #  Number of bp we cover in the assembled contig.
         my $covend = 0;   #  Highest position on the contig we've covered.
+        my $breadth = 0;
 
         foreach my $h (@rh) {
             my ($ctgbgn, $ctgend, $ctglen, $con, $conbgn, $conend, $conlen, $ident) = split '\0', $h;
@@ -411,24 +413,26 @@ sub filterMash ($$) {
                 $covlen += $ctgend - $ctgbgn;   #  No overlap with an existing hit.
                 $covend  = $ctgend;
             }
-            elsif ($ctgend <= $covend) {        #  Completely contianed in existing hits.
+            elsif ($ctgend <= $covend) {        #  Completely contained in existing hits.
                 #covlen += 0;
                 #covend  = $covend;
             }
             else {                              #  An extension to what we've covered already.
-                $covlen += $covend - $ctgend;
+                $covlen += $ctgend - $covend;
                 $covend  = $ctgend;
             }
+            $breadth = $covlen / $conlen;
         }
-
         next   if ($covlen < 0.5 * $contigLength{$ctg});    #  Not covering enough of the contig.
 
         $hits{$ctg}++;
 
-        next   if ($hifiCoverage{$ctg} < $exemplarDepth);   #  Lower depth than the existing exemplar.
-
-        $exemplar      = $ctg;
-        $exemplarDepth = $hifiCoverage{$ctg};
+        next   if ($breadth < $exemplarBreadth || ($breadth == $exemplarBreadth && $hifiCoverage{$ctg} < $exemplarDepth));           #  lower breadth of coverage of the reference than the existing exemplar
+                                                                                                                                     #  or same breadth but lower depth
+                                                                                                                                     #
+        $exemplar        = $ctg;
+        $exemplarDepth   = $hifiCoverage{$ctg};
+        $exemplarBreadth = $breadth;
     }
 
     sub sumLen (@) {
