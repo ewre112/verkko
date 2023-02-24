@@ -106,7 +106,7 @@ cp -p assembly.fasta ../{output.cns}
 #  if it fails to circularize it will output sequence unchanged
 for xx in assembly.*.exemplar.fasta ; do
   if [ -e \$xx ]; then
-    {PYTHON} {VERKKO}/scripts/circularize_ctgs.py -p 30 -o \$xx --min-ovl 2500 \$xx
+    {PYTHON} {VERKKO}/scripts/circularize_ctgs.py -p 100 -o \$xx --min-ovl 2500 \$xx
   fi
 done
 

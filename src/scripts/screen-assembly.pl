@@ -395,16 +395,16 @@ sub filterMash ($$) {
     #
 
     my %hits;
-    my $exemplar       = "";
-    my $exemplarDepth  = 0;
-    my $exemplarBreadth = 0;
+    my $exemplar        = "";
+    my $exemplarDepth   = 0;
+    my $exemplarBreadth = 0.;
 
     foreach my $ctg (keys %rawhits) {
         my @rh = sort { $a <=> $b } @{$rawhits{$ctg}};   #  Sort by contig begin position.
 
         my $covlen = 0;   #  Number of bp we cover in the assembled contig.
         my $covend = 0;   #  Highest position on the contig we've covered.
-        my $breadth = 0;
+        my $breadth = 0.;
 
         foreach my $h (@rh) {
             my ($ctgbgn, $ctgend, $ctglen, $con, $conbgn, $conend, $conlen, $ident) = split '\0', $h;
@@ -427,12 +427,16 @@ sub filterMash ($$) {
 
         $hits{$ctg}++;
 
-        next   if ($breadth < $exemplarBreadth || ($breadth == $exemplarBreadth && $hifiCoverage{$ctg} < $exemplarDepth));           #  lower breadth of coverage of the reference than the existing exemplar
-                                                                                                                                     #  or same breadth but lower depth
-                                                                                                                                     #
-        $exemplar        = $ctg;
-        $exemplarDepth   = $hifiCoverage{$ctg};
-        $exemplarBreadth = $breadth;
+        #printf "Checking contig %s with dreadth %f and coverage %f and current best is %f and %f\n", $ctg, $breadth,  $hifiCoverage{$ctg}, $exemplarBreadth, $exemplarDepth;
+        if (($exemplarBreadth < 0.90 && $breadth > $exemplarBreadth) || ($breadth > 0.90 && $hifiCoverage{$ctg} > $exemplarDepth) || ($breadth == $exemplarBreadth &&  $hifiCoverage{$ctg} > $exemplarDepth)) {
+            #  lower breadth of coverage of the reference than the existing exemplar
+            #  or covers the full reference and has more coverage
+            #  or same breadth but lower depth
+
+            $exemplar        = $ctg;
+            $exemplarDepth   = $hifiCoverage{$ctg};
+            $exemplarBreadth = $breadth;
+        }
     }
 
     sub sumLen (@) {

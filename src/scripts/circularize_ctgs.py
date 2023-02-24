@@ -62,7 +62,7 @@ if args.contigs:
 records = []
 for n in contig_dict:
     print('=======================================', file=sys.stderr)
-    flank = int(len(contig_dict[n]) * 0.85)
+    flank = int(len(contig_dict[n]) * 0.60)
     print('Processing', n, 'with flank set to', flank, 'and length', len(contig_dict[n]), file=sys.stderr)
     seq = make_sequence(contig_dict[n])
     records.append(SeqRecord(seq, id=n, description=''))
