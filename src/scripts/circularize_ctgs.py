@@ -8,7 +8,8 @@ from Bio.SeqRecord import SeqRecord
 
 parser = argparse.ArgumentParser(description="Circularize contigs")
 parser.add_argument("contigs", nargs='?', help="Input FASTA file (by default reading FASTA from stdin)")
-parser.add_argument("-p", "--penalty", type=int, default=300, help="Mismatch/indel penalty (default: 300bp)")
+parser.add_argument("-p", "--penalty", type=int, default=100, help="Mismatch/indel penalty (default: 100bp)")
+parser.add_argument("-f", "--flank", type=float, default=0.60, help="Maximum fraction allowed to be trimmed (default: 0.60)")
 parser.add_argument("-o", "--output", help="Output FASTA (by default prints to stdout)")
 parser.add_argument("--min-ovl", type=int, default=0, help="Minimal length of overlap (default 0)")
 args = parser.parse_args()
@@ -21,6 +22,7 @@ else:
     i_handle = sys.stdin
 
 penalty = args.penalty
+flank = args.flank
 
 print('Mismatch/indel penalty', penalty, file=sys.stderr)
 print('Using Parasail', file=sys.stderr)
@@ -62,7 +64,7 @@ if args.contigs:
 records = []
 for n in contig_dict:
     print('=======================================', file=sys.stderr)
-    flank = int(len(contig_dict[n]) * 0.60)
+    flank = int(len(contig_dict[n]) * flank)
     print('Processing', n, 'with flank set to', flank, 'and length', len(contig_dict[n]), file=sys.stderr)
     seq = make_sequence(contig_dict[n])
     records.append(SeqRecord(seq, id=n, description=''))
