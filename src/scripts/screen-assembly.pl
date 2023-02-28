@@ -117,7 +117,7 @@ sub loadSequenceLengths ($) {
 
     print "Loading sequence lengths from '$a'.\n";
 
-    if (-e "$a.lengths") {
+    if (-s "$a.lengths") {
         open(F, "< $a.lengths");
         while (<F>) {
             my ($n, $l) = split '\s+', $_;
@@ -296,7 +296,7 @@ sub mashMap ($$$$) {
 
     my $map;
 
-    if (-e "$output.$cp.mashmap.out") {
+    if (-s "$output.$cp.mashmap.out") {
         print "Using pre-computed mashmap results for '$cp' ('$cs').\n";
     }
     else {
@@ -375,7 +375,7 @@ sub filterMash ($$) {
         my $concov = int(0.5 + 100.0 * ($conend - $conbgn) / $conlen);
         my $ctgcov = int(0.5 + 100.0 * ($ctgend - $ctgbgn) / $ctglen);
 
-        my $gi   = $ident   >= 98.0);   #  Good identity.
+        my $gi   = (int($ident+0.5) >= 98.0);   #  Good identity.
         my $g1   = ($ctgcov >= 10);     #  Covers a goodly chunk of the contig.
         my $g2   = ($concov >= 25);     #  Covers a goodly chunk of the contaminant.
 
