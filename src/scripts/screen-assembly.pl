@@ -375,15 +375,18 @@ sub filterMash ($$) {
         my $concov = int(0.5 + 100.0 * ($conend - $conbgn) / $conlen);
         my $ctgcov = int(0.5 + 100.0 * ($ctgend - $ctgbgn) / $ctglen);
 
-        my $gi   = (int($ident+0.5)  >= 98.0);   #  Good identity.
+        my $gi   = $ident   >= 98.0);   #  Good identity.
         my $g1   = ($ctgcov >= 10);     #  Covers a goodly chunk of the contig.
         my $g2   = ($concov >= 25);     #  Covers a goodly chunk of the contaminant.
+
+        #print "$ctgbgn $ctgend $ctglen $con $conbgn $conend $conlen $ident\n";
 
         next  if (!$gi);   #  Ignore bad identity.
         next  if (!$g1);   #  Ignore bad coverage.
 
         #$rawhits{$ctg} = ()   if (!exists($rawhits{$ctg}));
 
+        #print "$ctgbgn $ctgend $ctglen $con $conbgn $conend $conlen $ident - SAVED\n";
         push @{$rawhits{$ctg}}, "$ctgbgn\0$ctgend\0$ctglen\0$con\0$conbgn\0$conend\0$conlen\0$ident";
     }
 
@@ -532,10 +535,8 @@ sub filterMash ($$) {
 
 #  Extract '@filter' sequences from $a.
 #
-#  If $cp is defined, the sequences in @filter are copied to the output file.
-#  If it is undef, the sequences NOT in @filter are copied to the output file.
-#
-#  If $exemplar is defined, that specific sequence is saved.
+#   - Sequences in @filter are copied to the output file.
+#   - If $exemplar is defined, that specific sequence is saved, too.
 #
 sub filterSequences ($$$$@) {
     my $a           = shift @_;
@@ -556,7 +557,7 @@ sub filterSequences ($$$$@) {
     return   if ($fastmode);
 
     #  Open some output files.
-    if (defined($cp)) {
+    if (defined($exemplar)) {
         print "Filtering '$cp' from '$a'.\n";
         open(O, "> $output.fasta")          or die "Failed to open '$output.fasta' for output: $!\n";
         open(E, "> $output.exemplar.fasta") or die "Failed to open '$output.exemplar.fasta' for output: $!\n";
@@ -578,13 +579,8 @@ sub filterSequences ($$$$@) {
         if ($h =~ m/^>(\S+)\s*/) {
             my $n = $1;
 
-            if (defined($cp)) {
-                print O "$h\n$s\n"  if (exists($filter{$n}));
-                print E "$h\n$s\n"  if ($n eq $exemplar);
-            }
-            else {
-                print O "$h\n$s\n"  if (!exists($filter{$n}));
-            }
+            print O "$h\n$s\n"  if (exists($filter{$n}));
+            print E "$h\n$s\n"  if ($n eq $exemplar) && (defined($exemplar));
         }
         else {
             die "Failed to find ident line in input line '", substr($h, 0, 40), "'.\n";
@@ -592,7 +588,7 @@ sub filterSequences ($$$$@) {
     }
     close(F);
 
-    close(E)   if (defined($cp));
+    close(E)   if (defined($exemplar));
     close(O);
 
     unlink "$output.exemplar.fasta" if (!defined($exemplar));
@@ -628,7 +624,16 @@ foreach my $cp (sort keys %contaminantSeq) {
     push @crud, @contaminants;
 }
 
+my %gold = %contigLength;
+my @gold;
 
-filterSequences($assembly, $output, undef, undef, @crud);
+foreach my $k (@crud) {         #  Remove the crud from the gold.
+    delete $gold{$k};
+}
+foreach my $k (keys %gold) {    #  Copy gold to a list.
+    push @gold, $k;
+}
+
+filterSequences($assembly, $output, undef, undef, @gold);
 
 exit(0);
