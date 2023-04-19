@@ -8,9 +8,9 @@ forbidden_connectionfile = sys.argv[3]
 picked_connections_file = sys.argv[4]
 pathsfile = sys.argv[5]
 ontcoveragefile = sys.argv[6]
-min_ont_solid_coverage = int(sys.argv[7])
+min_ont_solid_coverage_fraction = float(sys.argv[7])
 hificoveragefile = sys.argv[8]
-min_hifi_solid_coverage = int(sys.argv[9])
+min_hifi_solid_coverage_fraction = float(sys.argv[9])
 
 
 length_solid_node_threshold = 200000
@@ -50,14 +50,36 @@ with open(uniquefile) as f:
 	for l in f:
 		unique_nodes.add(l.strip())
 
+hifi_coverage_sum = 0.0
+hifi_length_sum = 0.0
+with open(hificoveragefile) as f:
+	for l in f:
+		parts = l.strip().split('\t')
+		if parts[1] == "coverage": continue
+		hifi_coverage_sum += float(parts[1]) * float(parts[2])
+		hifi_length_sum += float(parts[2])
+average_hifi_coverage = float(hifi_coverage_sum)/float(hifi_length_sum)
+sys.stderr.write("estimated average hifi coverage " + str(average_hifi_coverage) + "\n")
+
 hifi_solid_nodes = set()
 with open(hificoveragefile) as f:
 	for l in f:
 		parts = l.strip().split('\t')
 		if parts[1] == "coverage": continue
-		if float(parts[1]) < min_hifi_solid_coverage: continue
+		if float(parts[1]) < min_hifi_solid_coverage_fraction * average_hifi_coverage: continue
 		if parts[0] in unique_nodes: continue
 		hifi_solid_nodes.add(parts[0])
+
+ont_coverage_sum = 0.0
+ont_length_sum = 0.0
+with open(ontcoveragefile) as f:
+	for l in f:
+		parts = l.strip().split('\t')
+		if parts[2] == "coverage": continue
+		ont_coverage_sum += float(parts[1]) * float(parts[2])
+		ont_length_sum += float(parts[2])
+average_ont_coverage = float(ont_coverage_sum)/float(ont_length_sum)
+sys.stderr.write("estimated average ont coverage " + str(average_ont_coverage) + "\n")
 
 length_solid_nodes = set()
 ont_solid_nodes = set()
@@ -66,7 +88,7 @@ with open(ontcoveragefile) as f:
 		parts = l.strip().split('\t')
 		if parts[2] == "coverage": continue
 		if parts[0] in unique_nodes: continue
-		if float(parts[2]) >= min_ont_solid_coverage: ont_solid_nodes.add(parts[0])
+		if float(parts[2]) >= min_ont_solid_coverage_fraction * average_ont_coverage: ont_solid_nodes.add(parts[0])
 		if int(parts[1]) >= length_solid_node_threshold: length_solid_nodes.add(parts[0])
 
 solid_nodes = set()
@@ -78,7 +100,7 @@ for node in length_solid_nodes:
 
 solid_edges = set()
 for key in edge_coverage:
-	if edge_coverage[key] < min_ont_solid_coverage: continue
+	if edge_coverage[key] < min_ont_solid_coverage_fraction * average_ont_coverage: continue
 	if key[0][1:] not in hifi_solid_nodes or key[1][1:] not in hifi_solid_nodes: continue
 	solid_edges.add(key)
 
