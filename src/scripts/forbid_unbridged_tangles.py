@@ -77,7 +77,7 @@ with open(ontcoveragefile) as f:
 		parts = l.strip().split('\t')
 		if parts[2] == "coverage": continue
 		ont_coverage_sum += float(parts[1]) * float(parts[2])
-		ont_length_sum += float(parts[2])
+		ont_length_sum += float(parts[1])
 average_ont_coverage = float(ont_coverage_sum)/float(ont_length_sum)
 sys.stderr.write("estimated average ont coverage " + str(average_ont_coverage) + "\n")
 
